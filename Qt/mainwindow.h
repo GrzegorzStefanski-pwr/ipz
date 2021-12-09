@@ -33,9 +33,11 @@ private slots:
     void on_pushButtonSendData_clicked();
     void on_pushButtonRunRobot_clicked();
     void on_pushButtonAcceptPoint_clicked();
+    void on_pushButtonGripper_clicked();
 
 private:
     Ui::MainWindow *ui;
     QSerialPort *device;
+    bool gripperStatus;
 };
 #endif // MAINWINDOW_H

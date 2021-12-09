@@ -3,6 +3,10 @@
 
 bool punkt_zdefiniowany = false;
 bool dane_przeslane = false;
+
+bool gripper_closed = true;
+bool gripper_open = false;
+
 QString tempInterpolation;
 QString tempResolution;
 QString tempCoRdX;
@@ -15,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     this->device = new QSerialPort(this);
+    this->gripperStatus = gripper_open;
 }
 
 MainWindow::~MainWindow()
@@ -278,3 +283,21 @@ void MainWindow::on_pushButtonRunRobot_clicked()
     }
 }
 
+void MainWindow::on_pushButtonGripper_clicked()
+{
+    if(!(this->device->isOpen() && this->device->isWritable())){
+        this->addToLogs("Port nie jest otwarty!");
+        return;
+    }
+
+    if (this->gripperStatus == gripper_open){
+        this->sendMessageToDeviceWithoutLogs("close_gripper\n");
+        this->addToLogs("Zamykam chwytak");
+        this->gripperStatus = gripper_closed;
+    }
+    else {
+        this->sendMessageToDeviceWithoutLogs("open_gripper\n");
+        this->addToLogs("Otwieram chwytak");
+        this->gripperStatus = gripper_open;
+    }
+}
