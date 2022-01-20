@@ -1,12 +1,15 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+// definicje zmiennych stanowych
 bool punkt_zdefiniowany = false;
 bool dane_przeslane = false;
 
+// przypisanie stanu chwytaka do zmiennych dwustanowych
 bool gripper_closed = true;
 bool gripper_open = false;
 
+// zmienne globalne
 QString tempInterpolation;
 QString tempResolution;
 QString tempCoRdX;
@@ -17,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    // tworzenie okna, handler'a portu usb i przypisanie początkowego stanu chwytaka
     ui->setupUi(this);
     this->device = new QSerialPort(this);
     this->gripperStatus = gripper_open;
@@ -24,16 +28,19 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    // usuwanie okna
     delete ui;
 }
 
-
+// Handler przycisku wyszukiwania urządzeń
 void MainWindow::on_pushButtonSearch_clicked()
 {
    this->addToLogs("Szukam urządzeń...");
    ui->comboBoxDevices->clear();
+
    QList<QSerialPortInfo> devices;
    devices = QSerialPortInfo::availablePorts();
+
    for(int i=0; i < devices.count(); i++)
    {
        this->addToLogs("Znalazłem urządzenie: " + devices.at(i).portName()
@@ -43,7 +50,7 @@ void MainWindow::on_pushButtonSearch_clicked()
    }
 }
 
-
+// Dodawanie wiadomości do logów programowych
 void MainWindow::addToLogs(QString message)
 {
    QString currentDateTime = QDateTime::currentDateTime()
@@ -51,13 +58,13 @@ void MainWindow::addToLogs(QString message)
    ui->textEditLogs->append(currentDateTime + "\t" + message);
 }
 
-
+// Czyszczenie logów programowych
 void MainWindow::on_pushButtonClearLogs_clicked()
 {
     ui->textEditLogs->clear();
 }
 
-
+// Handler przycisku otwarcia połączenia
 void MainWindow::on_pushButtonConnect_clicked()
 {
     if(ui->comboBoxDevices->count() == 0)
@@ -74,6 +81,7 @@ void MainWindow::on_pushButtonConnect_clicked()
     {
         if(device->open(QSerialPort::ReadWrite))
         {
+            // Ustawienie parametrów połączenia
             this->device->setBaudRate(QSerialPort::Baud115200);
             this->device->setDataBits(QSerialPort::Data8);
             this->device->setParity(QSerialPort::NoParity);
@@ -97,8 +105,10 @@ void MainWindow::on_pushButtonConnect_clicked()
 }
 
 
+// Handler przycisku zakończenia połączenia
 void MainWindow::on_pushButtonDisconnect_clicked()
 {
+    // Sprawdzenie czy połączenie jest otwarte
     if(this->device->isOpen())
     {
         this->device->close();
@@ -110,7 +120,7 @@ void MainWindow::on_pushButtonDisconnect_clicked()
     }
 }
 
-
+// Czytanie bufforu portu usb
 void MainWindow::readFromPort()
 {
     while(this->device->canReadLine())
@@ -123,8 +133,10 @@ void MainWindow::readFromPort()
 }
 
 
+// Wysyłanie wiadomości
 void MainWindow::sendMessageToDevice(QString message)
 {
+    // Sprawdzenie czy możliwa jest komunikacja z robotem
     if(this->device->isOpen() && this->device->isWritable())
     {
         QString msg = message;
@@ -137,9 +149,10 @@ void MainWindow::sendMessageToDevice(QString message)
     }
 }
 
-
+// Wysyłanie wiadomości bez zachowania logu
 void MainWindow::sendMessageToDeviceWithoutLogs(QString message)
 {
+    // Sprawdzenie czy możliwa jest komunikacja z robotem
     if(this->device->isOpen() && this->device->isWritable())
     {
         QString msg = message;
@@ -152,6 +165,7 @@ void MainWindow::sendMessageToDeviceWithoutLogs(QString message)
 }
 
 
+// Handler przycisku wprowadzania punktu
 void MainWindow::on_pushButtonAcceptPoint_clicked()
 {
     if(this->device->isOpen() && this->device->isWritable())
@@ -242,16 +256,23 @@ void MainWindow::on_pushButtonAcceptPoint_clicked()
 }
 
 
+// Handler przycisku wysyłania danych
 void MainWindow::on_pushButtonSendData_clicked()
 {
     if(this->device->isOpen() && this->device->isWritable())
     {
         if (punkt_zdefiniowany == true)
         {
-            this->addToLogs("Wysyłam informacje do urządzenia: " + tempInterpolation + ":" + tempResolution + ":" + tempCoRdX + ":" + tempCoRdY + ":" + tempCoRdZ + "\\n ");
+            this->addToLogs("Wysyłam informacje do urządzenia: "
+                            + tempInterpolation + ":" + tempResolution
+                            + ":" + tempCoRdX + ":" + tempCoRdY + ":"
+                            + tempCoRdZ + "\\n ");
             tempInterpolation.remove(0,1);
-            this->sendMessageToDeviceWithoutLogs(tempInterpolation + ":" + tempResolution + ":" + tempCoRdX + ":" + tempCoRdY + ":" + tempCoRdZ + "\n");
 
+            // Wysyłanie komendy do robota
+            this->sendMessageToDeviceWithoutLogs(tempInterpolation + ":" + tempResolution + ":"
+                                                 + tempCoRdX + ":" + tempCoRdY + ":" + tempCoRdZ + "\n");
+            // Aktualizacja zmiennych stanowych
             punkt_zdefiniowany = false;
             dane_przeslane = true;
         } else
@@ -265,12 +286,15 @@ void MainWindow::on_pushButtonSendData_clicked()
 }
 
 
+// Handeler uruchomienia pracy robota
 void MainWindow::on_pushButtonRunRobot_clicked()
 {
+    // Sprawdzenie czy możliwa jest komunikacja z robotem
     if(this->device->isOpen() && this->device->isWritable())
     {
         if (dane_przeslane == true)
         {
+            // Wysyłanie komendy do robota
             this->sendMessageToDevice("ruch_efektorem\n");
             dane_przeslane = false;
         } else
@@ -283,13 +307,16 @@ void MainWindow::on_pushButtonRunRobot_clicked()
     }
 }
 
+// Hander przycisku obsługi chwytaka
 void MainWindow::on_pushButtonGripper_clicked()
 {
+    // Sprawdzenie czy możliwa jest komunikacja z robotem
     if(!(this->device->isOpen() && this->device->isWritable())){
         this->addToLogs("Port nie jest otwarty!");
         return;
     }
 
+    // Otwieranie lub zamykanie chwytaka w zależności od jego aktualnego stanu
     if (this->gripperStatus == gripper_open){
         this->sendMessageToDeviceWithoutLogs("close_gripper\n");
         this->addToLogs("Zamykam chwytak");

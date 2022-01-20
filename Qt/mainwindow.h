@@ -16,25 +16,30 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+// Metody publiczne
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+// Metody prywatne
 private slots:
-    void on_pushButtonSearch_clicked();
+    // Utils
     void addToLogs(QString message);
-    void on_pushButtonClearLogs_clicked();
-    void on_pushButtonConnect_clicked();
-    void on_pushButtonDisconnect_clicked();
     void readFromPort();
     void sendMessageToDevice(QString message);
     void sendMessageToDeviceWithoutLogs(QString message);
 
+    // Handler'y przycisków
+    void on_pushButtonSearch_clicked();
+    void on_pushButtonClearLogs_clicked();
+    void on_pushButtonConnect_clicked();
+    void on_pushButtonDisconnect_clicked();
     void on_pushButtonSendData_clicked();
     void on_pushButtonRunRobot_clicked();
     void on_pushButtonAcceptPoint_clicked();
     void on_pushButtonGripper_clicked();
 
+// Zmienne prywatne
 private:
     Ui::MainWindow *ui;
     QSerialPort *device;
